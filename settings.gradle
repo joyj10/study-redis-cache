@@ -1,2 +1,3 @@
-rootProject.name = 'springcache'
+rootProject.name = 'cache'
 include 'jediscache'
+include 'springcache'
