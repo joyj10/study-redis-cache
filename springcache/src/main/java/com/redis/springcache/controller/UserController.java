@@ -1,5 +1,6 @@
 package com.redis.springcache.controller;
 
+import com.redis.springcache.domain.entity.RedisHashUser;
 import com.redis.springcache.domain.entity.User;
 import com.redis.springcache.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +20,13 @@ public class UserController {
         return ResponseEntity.ok(userService.getUser(id));
     }
 
-    @GetMapping("/users")
+    @GetMapping("/users/name")
     public ResponseEntity<User> getUserByName(@RequestParam(name = "name") String name) {
         return ResponseEntity.ok(userService.getUserByName(name));
+    }
+
+    @GetMapping("/users/email")
+    public ResponseEntity<RedisHashUser> getUserByEmail(@RequestParam(name = "email") String email) {
+        return ResponseEntity.ok(userService.getUserByEmail(email));
     }
 }

@@ -1,6 +1,8 @@
 package com.redis.springcache.service;
 
+import com.redis.springcache.domain.entity.RedisHashUser;
 import com.redis.springcache.domain.entity.User;
+import com.redis.springcache.domain.repository.RedisHashUserRepository;
 import com.redis.springcache.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -11,13 +13,20 @@ import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserService {
 
     private final UserRepository userRepository;
     private final RedisTemplate<String, User> userRedisTemplate;
     private final RedisTemplate<String, Object> objectRedisTemplate;
+    private final RedisHashUserRepository redisHashUserRepository;
 
-    @Transactional(readOnly = true)
+    /**
+     * 사용자 조회(id)
+     * - 캐시 : userRedisTemplate 활용
+     * @param id 사용자 id
+     * @return User
+     */
     public User getUser(final Long id){
         // 1. cache get
         String userCacheKey = getUserIdCacheKey(id);
@@ -35,10 +44,15 @@ public class UserService {
         return user;
     }
 
-    @Transactional(readOnly = true)
+    /**
+     * 사용자 조회(이름)
+     * - 캐시 : objectRedisTemplate 활용
+     * @param name 사용자 이름
+     * @return User
+     */
     public User getUserByName(final String name){
         // 1. cache get
-        String userCacheKey = getUserNameCacheKey(name);
+        String userCacheKey = getUserCacheKey("name", name);
         User cachedUser = (User) objectRedisTemplate.opsForValue().get(userCacheKey);
         if (cachedUser != null) {
             return cachedUser;
@@ -53,11 +67,34 @@ public class UserService {
         return user;
     }
 
+    /**
+     * 사용자 조회(이메일)
+     * - 캐시 : RedisHashRepository 활용
+     * @param email 이메일
+     * @return User
+     */
+    public RedisHashUser getUserByEmail(String email) {
+        return redisHashUserRepository.findByEmail(email).orElseGet(() -> {
+            User user = userRepository.findByEmail(email).orElseThrow();
+            return redisHashUserRepository.save(
+                    RedisHashUser.builder()
+                            .id(user.getId())
+                            .name(user.getName())
+                            .email(user.getEmail())
+                            .createdAt(user.getCreatedAt())
+                            .updatedAt(user.getUpdatedAt())
+                            .build()
+            );
+        });
+    }
+
+
     private static String getUserIdCacheKey(Long id) {
         return "user:id:%d".formatted(id);
     }
 
-    private static String getUserNameCacheKey(String name) {
-        return "user:name:%s".formatted(name);
+    private static String getUserCacheKey(String type, String value) {
+        return "user:%s:%s".formatted(type, value);
     }
+
 }
