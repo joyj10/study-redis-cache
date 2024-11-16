@@ -29,4 +29,9 @@ public class UserController {
     public ResponseEntity<RedisHashUser> getUserByEmail(@RequestParam(name = "email") String email) {
         return ResponseEntity.ok(userService.getUserByEmail(email));
     }
+
+    @GetMapping("/users/{id}/spring-cache")
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.getUserById(id));
+    }
 }

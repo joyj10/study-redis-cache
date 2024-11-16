@@ -5,11 +5,14 @@ import com.redis.springcache.domain.entity.User;
 import com.redis.springcache.domain.repository.RedisHashUserRepository;
 import com.redis.springcache.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+
+import static com.redis.springcache.config.CacheConfig.CACHE1;
 
 @Service
 @RequiredArgsConstructor
@@ -88,13 +91,24 @@ public class UserService {
         });
     }
 
-
     private static String getUserIdCacheKey(Long id) {
         return "user:id:%d".formatted(id);
     }
 
     private static String getUserCacheKey(String type, String value) {
         return "user:%s:%s".formatted(type, value);
+    }
+
+
+    /**
+     * 사용자 조회(id)
+     * - 캐시 : spring cache 활용
+     * @param id 사용자 id
+     * @return User
+     */
+    @Cacheable(cacheNames = CACHE1, key = "'user:' + #id")
+    public User getUserById(final Long id){
+        return userRepository.findById(id).orElseThrow();
     }
 
 }
