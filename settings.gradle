@@ -1,3 +1,4 @@
 rootProject.name = 'redis'
 include 'jediscache'
 include 'springcache'
+include 'session'
